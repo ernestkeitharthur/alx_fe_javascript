@@ -9,33 +9,48 @@ const quotes = [
 function showRandomQuote() {
   const randomIndex = Math.floor(Math.random() * quotes.length);
   const quote = quotes[randomIndex];
-  
-  // Display the quote and category dynamically
+
   const quoteDisplay = document.getElementById('quoteDisplay');
   quoteDisplay.innerHTML = `<p>"${quote.text}"</p><p><strong>Category:</strong> ${quote.category}</p>`;
 }
 
-// Event listener for the 'Show New Quote' button
+// Event listener for 'Show New Quote' button
 document.getElementById('newQuote').addEventListener('click', showRandomQuote);
 
-// Function to add a new quote dynamically
+// Function to dynamically create the 'Add Quote' form and append it to the DOM
+function createAddQuoteForm() {
+  const formContainer = document.createElement('div');
+  formContainer.id = 'addQuoteForm'; // Assigning an ID for reference
+
+  formContainer.innerHTML = `
+    <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+    <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+    <button onclick="addQuote()">Add Quote</button>
+  `;
+
+  // Append the form container to the body (or another desired location)
+  document.body.appendChild(formContainer);
+}
+
+// Function to add a new quote to the array dynamically
 function addQuote() {
   const newQuoteText = document.getElementById('newQuoteText').value;
   const newQuoteCategory = document.getElementById('newQuoteCategory').value;
 
-  // Validate inputs before adding the quote
   if (newQuoteText === '' || newQuoteCategory === '') {
     alert('Please enter both a quote and a category.');
     return;
   }
 
-  // Add the new quote to the quotes array
+  // Add the new quote to the array
   quotes.push({ text: newQuoteText, category: newQuoteCategory });
 
-  // Clear the input fields after adding the quote
+  // Clear the input fields
   document.getElementById('newQuoteText').value = '';
   document.getElementById('newQuoteCategory').value = '';
 
-  // Provide feedback to the user
   alert('New quote added successfully!');
 }
+
+// Initialize the application by displaying the form on page load
+createAddQuoteForm();
