@@ -12,24 +12,17 @@ window.onload = function () {
   populateCategories();
   filterQuotes();
   syncQuotes(); // Initial sync with the server
-  setInterval(syncQuotes, 60000); // Periodically sync every 60 seconds
+  setInterval(syncQuotes, 60000); // Periodic sync every 60 seconds
 };
 
-// Sync quotes between local storage and the server
+// Function to sync local data with server data
 async function syncQuotes() {
   try {
-    console.log('Starting quote sync...');
-    const response = await fetch(SERVER_URL);
-    const serverQuotes = await response.json();
-
-    // Map server response to match quote format
-    const formattedQuotes = serverQuotes.map(item => ({
-      text: item.title,
-      category: item.body.substring(0, 15), // Use part of body text as category
-    }));
+    console.log('Syncing quotes with the server...');
+    const serverQuotes = await fetchQuotesFromServer();
 
     // Conflict resolution: Merge and prioritize server quotes
-    const mergedQuotes = mergeQuotes(quotes, formattedQuotes);
+    const mergedQuotes = mergeQuotes(quotes, serverQuotes);
 
     // Save merged quotes to local storage
     quotes = mergedQuotes;
@@ -39,21 +32,40 @@ async function syncQuotes() {
 
     alert('Quotes synced successfully!');
   } catch (error) {
-    console.error('Error syncing quotes with server:', error);
+    console.error('Error during quote sync:', error);
   }
 }
 
-// Merge local quotes with server quotes, prioritizing server data
+// Fetch quotes from the server
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const data = await response.json();
+
+    // Map server data to match the quote structure
+    return data.map(item => ({
+      text: item.title,
+      category: item.body.substring(0, 15), // Use part of body text as category
+    }));
+  } catch (error) {
+    console.error('Error fetching quotes from server:', error);
+    return [];
+  }
+}
+
+// Merge local and server quotes, giving priority to server data
 function mergeQuotes(localQuotes, serverQuotes) {
   const allQuotes = [...serverQuotes, ...localQuotes];
-  // Filter out duplicates by keeping only the first occurrence of each text
+
+  // Filter out duplicate quotes based on their text
   const uniqueQuotes = Array.from(
     new Map(allQuotes.map(quote => [quote.text, quote])).values()
   );
+
   return uniqueQuotes;
 }
 
-// Function to add a new quote locally and sync with the server
+// Add a new quote and sync it with the server
 function addQuote() {
   const newQuoteText = document.getElementById('newQuoteText').value;
   const newQuoteCategory = document.getElementById('newQuoteCategory').value;
@@ -65,7 +77,7 @@ function addQuote() {
 
   const newQuote = { text: newQuoteText, category: newQuoteCategory };
 
-  // Add new quote and sync with server
+  // Add the new quote locally and sync with the server
   quotes.push(newQuote);
   saveQuotes();
   syncNewQuoteWithServer(newQuote);
@@ -89,16 +101,16 @@ async function syncNewQuoteWithServer(quote) {
     });
 
     if (response.ok) {
-      console.log('Quote successfully synced with server:', quote);
+      console.log('New quote synced with the server:', quote);
     } else {
-      console.warn('Failed to sync quote with the server.');
+      console.warn('Failed to sync new quote with the server.');
     }
   } catch (error) {
-    console.error('Error syncing new quote with server:', error);
+    console.error('Error syncing new quote with the server:', error);
   }
 }
 
-// Populate categories dynamically from the quotes array
+// Populate category options dynamically
 function populateCategories() {
   const categories = [...new Set(quotes.map(quote => quote.category))];
   const categoryFilter = document.getElementById('categoryFilter');
@@ -133,7 +145,7 @@ function filterQuotes() {
   localStorage.setItem('lastSelectedCategory', selectedCategory);
 }
 
-// Create the 'Add Quote' form dynamically
+// Create the 'Add Quote' form
 function createAddQuoteForm() {
   const formContainer = document.getElementById('addQuoteForm');
   formContainer.innerHTML = `
